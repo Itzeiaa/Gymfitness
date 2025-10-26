@@ -65,7 +65,7 @@
     tr:hover td{background:var(--glass)}
     canvas{width:100%!important;height:320px!important}
 
-    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45)}
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45); z-index:999;}
     .dialog{width:min(700px,92vw);background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
   </style>
 </head>
@@ -233,7 +233,7 @@
       const students=[
         {name:'John Doe',   section:'BSIT 4A', updated:'2025-10-24', pre:{str:40,agi:50,spd:45,endu:60}, post:{str:60,agi:65,spd:58,endu:72}, status:'Completed'},
         {name:'Mary Jane',  section:'BSIT 4B', updated:'2025-10-26', pre:{str:35,agi:42,spd:40,endu:55}, post:null,                                     status:'Pre Only'},
-        {name:'Ivan Abueg', section:'BSIT 4A', updated:'2025-10-26', pre:{str:44,agi:48,spd:46,endu:61}, post:{str:56,agi:60,spd:54,endu:70}, status:'Completed'},
+        {name:'Juan Cruz', section:'BSIT 4A', updated:'2025-10-26', pre:{str:44,agi:48,spd:46,endu:61}, post:{str:56,agi:60,spd:54,endu:70}, status:'Completed'},
         {name:'Ava Cruz',   section:'BSIT 4C', updated:'2025-10-22', pre:{str:30,agi:35,spd:33,endu:48}, post:{str:45,agi:47,spd:44,endu:60}, status:'Completed'},
         {name:'Leo Santos', section:'BSIT 4B', updated:'2025-10-18', pre:{str:50,agi:52,spd:49,endu:66}, post:null,                                     status:'Pre Only'}
       ];
