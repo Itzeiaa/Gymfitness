@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Student Portal — Fitness Profile</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{
+      --bg:#f6f8ff; --panel:#ffffff; --panel-2:#f1f4ff; --text:#0c1430; --muted:#5c6585;
+      --primary:#3f5eff; --primary-2:#2a44ff; --accent:#00bfa6; --border:rgba(12,20,48,.10);
+      --glass:rgba(12,20,48,.05); --shadow:0 12px 32px rgba(12,20,48,.08);
+    }
+    [data-theme="dark"]{
+      --bg:#0b1020; --panel:#121833; --panel-2:#0f1630; --text:#e7ebff; --muted:#9aa3c7;
+      --primary:#7c8cff; --primary-2:#5466ff; --accent:#40e0d0; --border:rgba(255,255,255,.12);
+      --glass:rgba(255,255,255,.06); --shadow:0 12px 32px rgba(0,0,0,.45);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    h1,h2,h3{margin:0 0 10px 0}
+    label{display:block;font-size:12px;color:var(--muted);font-weight:800;margin-bottom:6px}
+    input,select{
+      width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);
+      background:var(--panel-2);color:var(--text);outline:none
+    }
+    input:focus,select:focus{box-shadow:0 0 0 3px rgba(63,94,255,.2)}
+    .btn{appearance:none;border:1px solid var(--border);background:var(--panel-2);color:var(--text);
+      padding:10px 12px;border-radius:10px;font-weight:800;cursor:pointer}
+    .btn.primary{background:linear-gradient(180deg,var(--primary),var(--primary-2));color:#fff;border:0}
+    .stack{display:flex;gap:10px;flex-wrap:wrap}
+    .muted{color:var(--muted)}
+    .sr{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden}
+
+    /* AUTH (first) */
+    .auth{min-height:100vh;display:grid;place-items:center;padding:24px}
+    .auth-card{width:min(960px,96vw);background:var(--panel);border:1px solid var(--border);
+      border-radius:16px;box-shadow:var(--shadow);padding:22px}
+    .auth-grid{display:grid;gap:16px;grid-template-columns:1fr 1fr}
+    @media (max-width:880px){.auth-grid{grid-template-columns:1fr}}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px}
+
+    /* APP (after login) */
+    .app{display:none;min-height:100vh;grid-template-columns:260px 1fr}
+    @media (max-width:900px){.app{grid-template-columns:1fr}}
+    .sidebar{position:sticky;top:0;height:100vh;background:var(--panel);border-right:1px solid var(--border);
+      box-shadow:var(--shadow);padding:18px;display:flex;flex-direction:column;gap:16px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:36px;height:36px;border-radius:10px;background:
+      radial-gradient(100px 80px at 20% 20%, var(--accent), transparent 40%),
+      radial-gradient(120px 120px at 100% 0%, var(--primary), transparent 45%),
+      radial-gradient(100px 160px at 20% 100%, #8b5cf6, transparent 40%);border:1px solid var(--border)}
+    .nav{display:flex;flex-direction:column;gap:6px}
+    .nav a{padding:10px 12px;border-radius:10px;border:1px solid transparent;text-decoration:none;color:var(--text);font-weight:700}
+    .nav a:hover{background:var(--glass);border-color:var(--border)}
+    .nav a.active{background:var(--glass);border-color:var(--border)}
+    .chip{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:var(--panel-2);color:var(--muted);font-weight:800}
+    .grow{flex:1}
+    .topbar{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;gap:12px;align-items:center}
+    .search{flex:1;display:flex;gap:10px;align-items:center;background:var(--panel-2);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+    .search input{border:0;outline:0;width:100%;background:transparent;color:var(--text)}
+    .content{padding:22px;max-width:1200px}
+    .grid{display:grid;gap:16px}
+    .grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    @media (max-width:1024px){.grid.cols-3{grid-template-columns:1fr 1fr}}
+    @media (max-width:720px){.grid.cols-2,.grid.cols-3{grid-template-columns:1fr}}
+    .kpi{font-size:26px;font-weight:800}
+    .tabs{display:flex;gap:8px;border-bottom:1px solid var(--border);margin-bottom:14px;flex-wrap:wrap}
+    .tab{padding:10px 14px;border-radius:10px;border:1px solid transparent;font-weight:800;color:var(--muted);background:transparent;cursor:pointer}
+    .tab.active{color:var(--text);background:var(--glass);border-color:var(--border)}
+    .hidden{display:none!important}
+    .toast{position:fixed;right:18px;bottom:18px;background:var(--panel);border:1px solid var(--border);padding:12px 14px;border-radius:12px;display:none;font-weight:800}
+    canvas{width:100%!important;height:320px!important}
+  </style>
+</head>
+<body>
+  <!-- AUTH (ISO: login first; signup available) -->
+  <main id="auth" class="auth" aria-labelledby="authTitle">
+    <div class="auth-card" role="dialog" aria-modal="true">
+      <h1 id="authTitle">Student Portal Access</h1>
+      <p class="muted">Login first to access your fitness profile and dashboard. Demo login is <b>admin / admin</b>.</p>
+      <div class="auth-grid" role="region" aria-label="Authentication forms">
+        <!-- Login -->
+        <section class="card" aria-labelledby="loginTitle">
+          <h2 id="loginTitle">Login</h2>
+          <form id="loginForm" novalidate>
+            <div style="display:grid;gap:12px">
+              <div>
+                <label for="loginUser">Username/Email</label>
+                <input id="loginUser" name="loginUser" autocomplete="username" required />
+              </div>
+              <div>
+                <label for="loginPass">Password</label>
+                <input id="loginPass" name="loginPass" type="password" autocomplete="current-password" required />
+              </div>
+              <div class="stack">
+                <button type="submit" class="btn primary">Login</button>
+                <button type="button" class="btn" id="forgotBtn">Forgot Password</button>
+              </div>
+              <div id="loginMsg" class="muted" aria-live="polite"></div>
+            </div>
+          </form>
+        </section>
+        <!-- Sign-up (demo only, no persistence) -->
+        <section class="card" aria-labelledby="signupTitle">
+          <h2 id="signupTitle">Sign-up</h2>
+          <form id="signupForm" novalidate>
+            <div class="grid cols-2">
+              <div>
+                <label for="suName">Full Name</label>
+                <input id="suName" name="suName" required />
+              </div>
+              <div>
+                <label for="suAge">Age</label>
+                <input id="suAge" name="suAge" type="number" min="1" required />
+              </div>
+              <div>
+                <label for="suSection">Section</label>
+                <input id="suSection" name="suSection" placeholder="e.g., BSIT 4A" required />
+              </div>
+              <div>
+                <label for="suPass">Password</label>
+                <input id="suPass" name="suPass" type="password" minlength="6" required />
+              </div>
+            </div>
+            <div class="stack" style="margin-top:10px">
+              <button type="submit" class="btn primary">Register</button>
+              <button type="reset" class="btn">Back to Login</button>
+            </div>
+            <div id="signupMsg" class="muted" aria-live="polite"></div>
+          </form>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- APP (shown after successful login) -->
+  <div id="app" class="app" aria-hidden="true">
+    <aside class="sidebar" aria-label="Primary">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div><h2 style="margin:0;font-size:16px">Student Fitness</h2><div class="muted" style="font-size:12px">Profile & Progress</div></div>
+      </div>
+      <nav id="nav" class="nav" aria-label="In-app">
+        <a href="#" data-target="dashboardView" class="active">My Dashboard</a>
+        <a href="#" data-target="pretestView">Pre-Test Form</a>
+        <a href="#" data-target="posttestView">Post-Test Update</a>
+      </nav>
+      <div class="grow"></div>
+      <div class="chip" id="studentChip" aria-live="polite">Student</div>
+      <div class="stack">
+        <button class="btn" id="themeBtn" type="button">🌗 Theme</button>
+        <button class="btn" id="logoutBtn" type="button">Logout</button>
+      </div>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <div class="search">🔎 <input placeholder="Search…"/></div>
+        <button class="btn primary" id="quickSaveBtn" type="button">Quick Save</button>
+      </div>
+
+      <div class="content">
+        <!-- DASHBOARD -->
+        <section id="dashboardView">
+          <h3>My Progress</h3>
+          <div class="grid cols-3" style="margin-top:8px">
+            <div class="card"><div class="muted">BMI</div><div id="kpiBMI" class="kpi">—</div></div>
+            <div class="card"><div class="muted">VO₂ Max</div><div id="kpiVO2" class="kpi">—</div></div>
+            <div class="card"><div class="muted">Last Updated</div><div id="kpiUpdated" class="kpi">—</div></div>
+          </div>
+
+          <div class="grid cols-2" style="margin-top:16px">
+            <div class="card"><h3>Strength Comparison (Pre vs Post)</h3><canvas id="barStrength"></canvas></div>
+            <div class="card"><h3>VO₂ Max Trend</h3><canvas id="lineVO2"></canvas></div>
+          </div>
+
+          <div class="card" style="margin-top:16px">
+            <h3>Remarks History</h3>
+            <div id="remarksList" class="muted">No remarks yet.</div>
+            <div class="stack" style="margin-top:12px">
+              <button class="btn" id="btnViewPre" type="button">View Pre-Test</button>
+              <button class="btn" id="btnViewPost" type="button">View Post-Test</button>
+              <button class="btn" id="addRemarkBtn" type="button">+ Add Sample Remark</button>
+              <button class="btn" id="clearRemarkBtn" type="button">Clear Remarks</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- PRE-TEST -->
+        <section id="pretestView" class="hidden">
+          <div class="tabs"><button class="tab active" type="button">Pre-Test</button><span class="muted" style="align-self:center">Auto BMI & VO₂ Max</span></div>
+          <form id="preForm" novalidate>
+            <div class="grid cols-2">
+              <fieldset class="card">
+                <legend><strong>Body Metrics</strong></legend>
+                <div class="grid cols-2">
+                  <div><label for="ptWeight">Weight (kg)</label><input id="ptWeight" type="number" step="0.1" min="1" required></div>
+                  <div><label for="ptHeight">Height (cm)</label><input id="ptHeight" type="number" step="0.1" min="1" required></div>
+                </div>
+                <div class="grid cols-2">
+                  <div><label for="ptBMI">BMI (auto)</label><input id="ptBMI" readonly></div>
+                  <div><label for="ptVO2">VO₂ Max (auto)</label><input id="ptVO2" readonly></div>
+                </div>
+              </fieldset>
+              <fieldset class="card">
+                <legend><strong>Performance</strong></legend>
+                <div class="grid cols-2">
+                  <div><label for="ptFlex">Flexibility</label><input id="ptFlex" type="number" min="0" required></div>
+                  <div><label for="ptStr">Strength</label><input id="ptStr" type="number" min="0" required></div>
+                  <div><label for="ptAgi">Agility</label><input id="ptAgi" type="number" min="0" required></div>
+                  <div><label for="ptSpd">Speed</label><input id="ptSpd" type="number" min="0" required></div>
+                </div>
+                <div><label for="ptEnd">Endurance</label><input id="ptEnd" type="number" min="0" required></div>
+              </fieldset>
+            </div>
+            <div class="stack" style="margin-top:12px">
+              <button type="submit" class="btn primary">Submit</button>
+              <button type="reset" class="btn">Reset</button>
+            </div>
+            <div id="preMsg" class="muted" aria-live="polite" style="margin-top:8px"></div>
+          </form>
+        </section>
+
+        <!-- POST-TEST -->
+        <section id="posttestView" class="hidden">
+          <div class="tabs"><button class="tab active" type="button">Post-Test</button><span class="muted" style="align-self:center">Validate vs Pre-Test</span></div>
+          <form id="postForm" novalidate>
+            <div class="grid cols-2">
+              <fieldset class="card">
+                <legend><strong>Update Post-Test</strong></legend>
+                <div class="grid cols-2">
+                  <div><label for="poStr">Strength</label><input id="poStr" type="number" min="0" required></div>
+                  <div><label for="poAgi">Agility</label><input id="poAgi" type="number" min="0" required></div>
+                  <div><label for="poSpd">Speed</label><input id="poSpd" type="number" min="0" required></div>
+                  <div><label for="poEnd">Endurance</label><input id="poEnd" type="number" min="0" required></div>
+                </div>
+                <div class="stack">
+                  <button type="submit" class="btn primary">Save Changes</button>
+                  <button type="button" class="btn" id="cancelPostBtn">Cancel</button>
+                </div>
+                <div id="postMsg" class="muted" aria-live="polite" style="margin-top:8px"></div>
+              </fieldset>
+              <div class="card">
+                <h3>Notes</h3>
+                <ul class="muted" style="line-height:1.9;padding-left:18px">
+                  <li>Enter realistic values only</li>
+                  <li>Dashboard updates after saving</li>
+                  <li>Maintain remarks weekly</li>
+                </ul>
+              </div>
+            </div>
+          </form>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">Saved ✅</div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const $ = (s, c=document)=>c.querySelector(s);
+      const $$ = (s, c=document)=>Array.from(c.querySelectorAll(s));
+
+      // In-memory state (no persistence)
+      const STATE = {
+        session:false,
+        profile:{ name:'Student' },
+        pre:null,
+        post:null,
+        remarks:[]
+      };
+
+      /* THEME */
+      $('#themeBtn')?.addEventListener('click', ()=>{
+        const root=document.documentElement;
+        root.setAttribute('data-theme', root.getAttribute('data-theme')==='dark'?'light':'dark');
+      });
+
+      /* GATE */
+      const auth=$('#auth'), app=$('#app');
+      const showApp=()=>{ auth.style.display='none'; app.style.display='grid'; app.setAttribute('aria-hidden','false'); initInside(); };
+      const hideApp=()=>{ app.style.display='none'; app.setAttribute('aria-hidden','true'); auth.style.display='grid'; };
+
+      /* AUTH */
+      $('#loginForm').addEventListener('submit', (e)=>{
+        e.preventDefault();
+        const user=$('#loginUser').value.trim();
+        const pass=$('#loginPass').value;
+        if(user==='admin' && pass==='admin'){
+          STATE.session=true; STATE.profile.name='Admin (Demo Student)';
+          $('#studentChip').textContent=STATE.profile.name;
+          showApp();
+        }else{
+          $('#loginMsg').textContent='Invalid credentials. Use admin / admin';
+        }
+      });
+      $('#forgotBtn').addEventListener('click', ()=> $('#loginMsg').textContent='Recovery not available in demo.');
+
+      // Sign-up just validates in demo mode
+      $('#signupForm').addEventListener('submit',(e)=>{
+        e.preventDefault();
+        const ok = ['#suName','#suAge','#suSection','#suPass'].every(id => $(id).value.trim()!=='' );
+        $('#signupMsg').textContent = ok ? 'Demo: Registration validated (no storage). Use admin / admin to log in.' : 'Please fill all fields.';
+      });
+
+      /* APP NAV */
+      function showSection(id){
+        ['dashboardView','pretestView','posttestView'].forEach(s=>$('#'+s).classList.add('hidden'));
+        $('#'+id).classList.remove('hidden');
+        $$('#nav a').forEach(a=>a.classList.toggle('active', a.dataset.target===id));
+      }
+      $('#nav').addEventListener('click', e=>{
+        const a=e.target.closest('a[data-target]'); if(!a) return;
+        e.preventDefault(); showSection(a.dataset.target);
+        if(a.dataset.target==='dashboardView'){ renderKPIs(); renderCharts(); renderRemarks(); }
+      });
+      $('#logoutBtn').addEventListener('click', ()=>{ STATE.session=false; hideApp(); });
+
+      /* TOAST */
+      const toast=$('#toast'); const notify=(m='Saved ✅')=>{ toast.textContent=m; toast.style.display='block'; setTimeout(()=>toast.style.display='none',1200); };
+      $('#quickSaveBtn')?.addEventListener('click', ()=> notify('Quick saved!'));
+
+      /* PRE-TEST */
+      const calcBMI=()=>{
+        const w=parseFloat($('#ptWeight').value||'0'), h=parseFloat($('#ptHeight').value||'0');
+        if(w>0 && h>0){ const m=h/100, bmi=w/(m*m); $('#ptBMI').value=bmi.toFixed(2); $('#ptVO2').value=(Math.max(25,(60-(bmi-20)*0.9))).toFixed(1); }
+        else{$('#ptBMI').value='';$('#ptVO2').value='';}
+      };
+      $('#ptWeight').addEventListener('input', calcBMI);
+      $('#ptHeight').addEventListener('input', calcBMI);
+
+      $('#preForm').addEventListener('submit', (e)=>{
+        e.preventDefault();
+        STATE.pre = {
+          weight:+($('#ptWeight').value||0), height:+($('#ptHeight').value||0),
+          bmi:+($('#ptBMI').value||0), vo2:+($('#ptVO2').value||0),
+          flex:+($('#ptFlex').value||0), str:+($('#ptStr').value||0),
+          agi:+($('#ptAgi').value||0), spd:+($('#ptSpd').value||0), endu:+($('#ptEnd').value||0),
+          ts: new Date().toISOString()
+        };
+        $('#preMsg').textContent='Pre-Test saved (demo, volatile).';
+        notify(); renderKPIs(); renderCharts(); showSection('dashboardView');
+      });
+
+      /* POST-TEST */
+      $('#postForm').addEventListener('submit', (e)=>{
+        e.preventDefault();
+        STATE.post = {
+          str:+($('#poStr').value||0), agi:+($('#poAgi').value||0),
+          spd:+($('#poSpd').value||0), endu:+($('#poEnd').value||0),
+          ts:new Date().toISOString()
+        };
+        $('#postMsg').textContent='Post-Test updated (demo, volatile).';
+        notify(); renderKPIs(); renderCharts(); showSection('dashboardView');
+      });
+      $('#cancelPostBtn').addEventListener('click', ()=> showSection('dashboardView'));
+
+      /* REMARKS */
+      function renderRemarks(){
+        const box=$('#remarksList');
+        box.innerHTML = (STATE.remarks||[]).slice(0,8).map(r=>`<span class="chip" style="display:inline-flex;margin:4px 6px 0 0">🗒️ ${r.msg} • <span class="muted" style="margin-left:6px">${r.ts}</span></span>`).join('') || '<span class="muted">No remarks yet.</span>';
+      }
+      $('#addRemarkBtn').addEventListener('click', ()=>{ STATE.remarks.unshift({msg:'Great consistency this week!', ts:new Date().toLocaleString()}); renderRemarks(); notify('Remark added'); });
+      $('#clearRemarkBtn').addEventListener('click', ()=>{ STATE.remarks=[]; renderRemarks(); notify('Remarks cleared'); });
+
+      /* KPIs & CHARTS */
+      function renderKPIs(){
+        $('#studentChip').textContent = STATE.profile.name || 'Student';
+        $('#kpiBMI').textContent = STATE.pre?.bmi ? STATE.pre.bmi.toFixed(2) : '—';
+        $('#kpiVO2').textContent = STATE.pre?.vo2 ? STATE.pre.vo2.toFixed(1) : '—';
+        const ts = STATE.post?.ts || STATE.pre?.ts; $('#kpiUpdated').textContent = ts ? new Date(ts).toLocaleDateString() : '—';
+      }
+      let barChart=null, lineChart=null;
+      function renderCharts(){
+        const pre = STATE.pre || {str:40,agi:50,spd:45,endu:60,vo2:36};
+        const post= STATE.post|| {str:55,agi:60,spd:58,endu:70};
+        if(barChart) barChart.destroy();
+        if(lineChart) lineChart.destroy();
+
+        barChart = new Chart($('#barStrength'),{
+          type:'bar',
+          data:{ labels:['Strength','Agility','Speed','Endurance'],
+            datasets:[{label:'Pre',data:[pre.str,pre.agi,pre.spd,pre.endu],backgroundColor:'rgba(63,94,255,.75)'},
+                      {label:'Post',data:[post.str,post.agi,post.spd,post.endu],backgroundColor:'rgba(0,191,166,.65)'}]},
+          options:{responsive:true}
+        });
+        const base = pre.vo2 || 36;
+        lineChart = new Chart($('#lineVO2'),{
+          type:'line',
+          data:{ labels:['Week 1','Week 2','Week 3','Week 4'],
+            datasets:[{label:'VO₂ Max', data:[base-2,base,base+1,base+3], borderColor:getComputedStyle(document.documentElement).getPropertyValue('--primary'), backgroundColor:'transparent', tension:.35}]},
+          options:{responsive:true}
+        });
+      }
+
+      /* Dashboard jump buttons */
+      $('#btnViewPre').addEventListener('click', ()=> showSection('pretestView'));
+      $('#btnViewPost').addEventListener('click', ()=> showSection('posttestView'));
+
+      /* Init after login */
+      function initInside(){ renderKPIs(); renderCharts(); renderRemarks(); showSection('dashboardView'); }
+    });
+  </script>
+</body>
+</html>

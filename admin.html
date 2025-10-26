@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Dashboard — Fitness System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{
+      --bg:#f6f8ff; --panel:#ffffff; --panel-2:#f1f4ff; --text:#0c1430; --muted:#5c6585;
+      --primary:#3f5eff; --primary-2:#2a44ff; --accent:#00bfa6; --border:rgba(12,20,48,.10);
+      --glass:rgba(12,20,48,.05); --shadow:0 12px 32px rgba(12,20,48,.08);
+    }
+    [data-theme="dark"]{
+      --bg:#0b1020; --panel:#121833; --panel-2:#0f1630; --text:#e7ebff; --muted:#9aa3c7;
+      --primary:#7c8cff; --primary-2:#5466ff; --accent:#40e0d0; --border:rgba(255,255,255,.12);
+      --glass:rgba(255,255,255,.06); --shadow:0 12px 32px rgba(0,0,0,.45);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    h1,h2,h3{margin:0 0 10px 0}
+    label{display:block;font-size:12px;color:var(--muted);font-weight:800;margin-bottom:6px}
+    input,select{width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--panel-2);color:var(--text)}
+    input:focus,select:focus{box-shadow:0 0 0 3px rgba(63,94,255,.2)}
+    .btn{appearance:none;border:1px solid var(--border);background:var(--panel-2);color:var(--text);padding:10px 12px;border-radius:10px;font-weight:800;cursor:pointer}
+    .btn.primary{background:linear-gradient(180deg,var(--primary),var(--primary-2));color:#fff;border:0}
+    .stack{display:flex;gap:10px;flex-wrap:wrap}
+    .muted{color:var(--muted)}
+    .hidden{display:none!important}
+
+    /* AUTH FIRST */
+    .auth{min-height:100vh;display:grid;place-items:center;padding:24px}
+    .auth-card{width:min(760px,96vw);background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:22px}
+
+    /* APP AFTER LOGIN */
+    .app{display:none;min-height:100vh;grid-template-columns:260px 1fr}
+    @media (max-width:900px){.app{grid-template-columns:1fr}}
+    .sidebar{position:sticky;top:0;height:100vh;background:var(--panel);border-right:1px solid var(--border);box-shadow:var(--shadow);padding:18px;display:flex;flex-direction:column;gap:16px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:36px;height:36px;border-radius:10px;background:
+      radial-gradient(100px 80px at 20% 20%, var(--accent), transparent 40%),
+      radial-gradient(120px 120px at 100% 0%, var(--primary), transparent 45%),
+      radial-gradient(100px 160px at 20% 100%, #8b5cf6, transparent 40%);border:1px solid var(--border)}
+    .nav{display:flex;flex-direction:column;gap:6px}
+    .nav a{padding:10px 12px;border-radius:10px;border:1px solid transparent;text-decoration:none;color:var(--text);font-weight:700}
+    .nav a:hover{background:var(--glass);border-color:var(--border)}
+    .nav a.active{background:var(--glass);border-color:var(--border)}
+    .chip{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:var(--panel-2);color:var(--muted);font-weight:800}
+    .grow{flex:1}
+    .topbar{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;gap:12px;align-items:center}
+    .search{flex:1;display:flex;gap:10px;align-items:center;background:var(--panel-2);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+    .search input{border:0;outline:0;width:100%;background:transparent;color:var(--text)}
+    .content{padding:22px;max-width:1280px}
+    .grid{display:grid;gap:16px}
+    .grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    @media (max-width:1024px){.grid.cols-3{grid-template-columns:1fr 1fr}}
+    @media (max-width:720px){.grid.cols-2,.grid.cols-3{grid-template-columns:1fr}}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:12px;border-bottom:1px solid var(--border);text-align:left;font-size:14px}
+    thead th{position:sticky;top:0;background:var(--panel);z-index:1}
+    tr:hover td{background:var(--glass)}
+    canvas{width:100%!important;height:320px!important}
+
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45)}
+    .dialog{width:min(700px,92vw);background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+  </style>
+</head>
+<body>
+  <!-- ADMIN LOGIN (ISO: gate first) -->
+  <main id="auth" class="auth" aria-labelledby="adminAuthTitle">
+    <div class="auth-card" role="dialog" aria-modal="true">
+      <h1 id="adminAuthTitle">Admin Login</h1>
+      <p class="muted">Use demo credentials <b>admin / admin</b> to proceed.</p>
+      <form id="adminLoginForm" novalidate>
+        <div style="display:grid;gap:12px">
+          <div><label for="adUser">Username</label><input id="adUser" autocomplete="username" required></div>
+          <div><label for="adPass">Password</label><input id="adPass" type="password" autocomplete="current-password" required></div>
+          <div class="stack">
+            <button type="submit" class="btn primary">Login</button>
+            <button type="button" class="btn" id="adminForgotBtn">Forgot?</button>
+          </div>
+          <div id="adminLoginMsg" class="muted" aria-live="polite"></div>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <!-- APP -->
+  <div id="app" class="app" aria-hidden="true">
+    <aside class="sidebar" aria-label="Admin Primary">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div><h2 style="margin:0;font-size:16px">Admin Console</h2><div class="muted" style="font-size:12px">Teacher / Analytics</div></div>
+      </div>
+      <nav id="nav" class="nav" aria-label="In-app">
+        <a href="#" class="active" data-target="studentsView">Students</a>
+        <a href="#" data-target="summaryView">Class Summary</a>
+      </nav>
+      <div class="grow"></div>
+      <div class="chip" id="adminChip" aria-live="polite">Admin</div>
+      <div class="stack"><button class="btn" id="themeBtn" type="button">🌗 Theme</button><button class="btn" id="logoutBtn" type="button">Logout</button></div>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <div class="search">🔎 <input id="q" placeholder="Search students, sections…"></div>
+        <button class="btn primary" id="exportCsvBtn" type="button">Export CSV</button>
+      </div>
+
+      <div class="content">
+        <!-- STUDENTS -->
+        <section id="studentsView">
+          <h3>Student Management</h3>
+          <div class="grid cols-3" style="margin-top:8px">
+            <div class="card"><div class="muted">Total Students</div><div id="kpiTotal" style="font:800 26px/1 Inter">—</div></div>
+            <div class="card"><div class="muted">Completed (Post)</div><div id="kpiCompleted" style="font:800 26px/1 Inter">—</div></div>
+            <div class="card"><div class="muted">Updated Today</div><div id="kpiToday" style="font:800 26px/1 Inter">—</div></div>
+          </div>
+          <div class="card" style="margin-top:16px;overflow:auto;max-height:62vh">
+            <table id="tbl" aria-label="Student list">
+              <thead>
+                <tr>
+                  <th>Student Name</th>
+                  <th>Section</th>
+                  <th>Last Update</th>
+                  <th>Status</th>
+                  <th style="text-align:right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- SUMMARY -->
+        <section id="summaryView" class="hidden">
+          <h3>Class Summary Dashboard</h3>
+          <div class="grid cols-2" style="margin-top:8px">
+            <div class="card">
+              <h3>Filters</h3>
+              <div style="display:grid;gap:12px">
+                <div>
+                  <label for="fSection" class="muted" style="display:block;font-size:12px">Section</label>
+                  <select id="fSection">
+                    <option value="all">All Sections</option>
+                    <option>BSIT 4A</option>
+                    <option>BSIT 4B</option>
+                    <option>BSIT 4C</option>
+                  </select>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                  <div><label class="muted" style="display:block;font-size:12px">From</label><input type="date" id="fFrom"></div>
+                  <div><label class="muted" style="display:block;font-size:12px">To</label><input type="date" id="fTo"></div>
+                </div>
+                <div>
+                  <label class="muted" style="display:block;font-size:12px">Test Type</label>
+                  <select id="fType"><option value="all">All</option><option value="pre">Pre-Test</option><option value="post">Post-Test</option></select>
+                </div>
+                <div class="stack"><button class="btn" id="refreshSummaryBtn" type="button">Refresh</button><button class="btn primary" id="exportPngBtn" type="button">Export Report (PNG)</button></div>
+              </div>
+            </div>
+            <div class="card"><h3>Aggregate Charts</h3><canvas id="summaryChart"></canvas></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 id="mTitle">Student Fitness Record</h3>
+        <div class="stack"><button class="btn" id="exportPdfBtn" type="button">Export as PDF</button><button class="btn" id="closeModalBtn" type="button">Close</button></div>
+      </div>
+      <div id="mSub" class="muted" style="margin-bottom:8px"></div>
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>Pre-Test vs Post-Test</h3>
+          <table>
+            <thead><tr><th>Metric</th><th>Pre</th><th>Post</th></tr></thead>
+            <tbody id="mTable"></tbody>
+          </table>
+        </div>
+        <div class="card"><h3>Interactive Graphs</h3><canvas id="mChart"></canvas></div>
+      </div>
+      <div class="card" style="margin-top:12px"><h3>Remarks / Notes</h3><textarea id="mRemarks" style="width:100%;height:90px;border-radius:12px;border:1px solid var(--border);background:var(--panel-2);color:var(--text);padding:10px"></textarea></div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const $=(s,c=document)=>c.querySelector(s); const $$=(s,c=document)=>Array.from(c.querySelectorAll(s));
+
+      /* THEME */
+      $('#themeBtn')?.addEventListener('click', ()=>{
+        const root=document.documentElement;
+        root.setAttribute('data-theme', root.getAttribute('data-theme')==='dark'?'light':'dark');
+      });
+
+      /* LOGIN GATE (admin/admin) */
+      const auth=$('#auth'), app=$('#app');
+      function enter(){ auth.style.display='none'; app.style.display='grid'; app.setAttribute('aria-hidden','false'); show('studentsView'); renderTable(); }
+      function leave(){ app.style.display='none'; app.setAttribute('aria-hidden','true'); auth.style.display='grid'; }
+
+      $('#adminLoginForm').addEventListener('submit', e=>{
+        e.preventDefault();
+        const u=$('#adUser').value.trim(); const p=$('#adPass').value;
+        if(u==='admin' && p==='admin'){ $('#adminChip').textContent=u; enter(); }
+        else{ $('#adminLoginMsg').textContent='Invalid credentials. Use admin / admin'; }
+      });
+      $('#adminForgotBtn').addEventListener('click', ()=> $('#adminLoginMsg').textContent='Recovery not available in demo.');
+      $('#logoutBtn')?.addEventListener('click', leave);
+
+      /* ROUTER */
+      const sections=['studentsView','summaryView'];
+      function show(id){
+        sections.forEach(s=>$('#'+s).classList.add('hidden'));
+        $('#'+id).classList.remove('hidden');
+        $$('#nav a').forEach(a=>a.classList.toggle('active', a.dataset.target===id));
+        if(id==='summaryView') renderSummary();
+      }
+      $('#nav').addEventListener('click', e=>{
+        const a=e.target.closest('a[data-target]'); if(!a) return;
+        e.preventDefault(); show(a.dataset.target);
+      });
+
+      /* DEMO DATA (in memory) */
+      const students=[
+        {name:'John Doe',   section:'BSIT 4A', updated:'2025-10-24', pre:{str:40,agi:50,spd:45,endu:60}, post:{str:60,agi:65,spd:58,endu:72}, status:'Completed'},
+        {name:'Mary Jane',  section:'BSIT 4B', updated:'2025-10-26', pre:{str:35,agi:42,spd:40,endu:55}, post:null,                                     status:'Pre Only'},
+        {name:'Ivan Abueg', section:'BSIT 4A', updated:'2025-10-26', pre:{str:44,agi:48,spd:46,endu:61}, post:{str:56,agi:60,spd:54,endu:70}, status:'Completed'},
+        {name:'Ava Cruz',   section:'BSIT 4C', updated:'2025-10-22', pre:{str:30,agi:35,spd:33,endu:48}, post:{str:45,agi:47,spd:44,endu:60}, status:'Completed'},
+        {name:'Leo Santos', section:'BSIT 4B', updated:'2025-10-18', pre:{str:50,agi:52,spd:49,endu:66}, post:null,                                     status:'Pre Only'}
+      ];
+
+      /* TABLE & KPIs */
+      function renderTable(){
+        const tbody=$('#tbody'); const today=new Date().toISOString().slice(0,10);
+        let completed=0, todayCount=0;
+        tbody.innerHTML=students.map((s,i)=>{ if(s.post) completed++; if(s.updated===today) todayCount++;
+          return `<tr>
+            <td>${s.name}</td><td>${s.section}</td>
+            <td>${new Date(s.updated).toLocaleDateString()}</td><td>${s.status}</td>
+            <td style="text-align:right">
+              <button class="btn" data-view="${i}">View</button>
+              <button class="btn" data-edit="${i}">Edit</button>
+              <button class="btn" data-del="${i}">Delete</button>
+            </td>
+          </tr>`; }).join('');
+        $('#kpiTotal').textContent=students.length; $('#kpiCompleted').textContent=completed; $('#kpiToday').textContent=todayCount;
+      }
+      $('#tbl').addEventListener('click', e=>{
+        const v=e.target.closest('[data-view]'); if(v) return openModal(+v.dataset.view);
+        const ed=e.target.closest('[data-edit]'); if(ed) return alert('Edit (demo) for '+students[+ed.dataset.edit].name);
+        const del=e.target.closest('[data-del]'); if(del && confirm('Delete '+students[+del.dataset.del].name+'?')){ students.splice(+del.dataset.del,1); renderTable(); }
+      });
+      $('#q').addEventListener('input', ()=>{
+        const term=$('#q').value.toLowerCase();
+        $$('#tbody tr').forEach(r=> r.style.display = r.textContent.toLowerCase().includes(term) ? '' : 'none');
+      });
+      $('#exportCsvBtn').addEventListener('click', ()=>{
+        const rows=[['Student Name','Section','Last Update','Status']];
+        students.forEach(s=>rows.push([s.name,s.section,s.updated,s.status]));
+        const csv=rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
+        const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a');
+        a.href=URL.createObjectURL(blob); a.download='students.csv'; a.click();
+      });
+
+      /* MODAL (Individual Student View) */
+      const modal=$('#modal'); let modalChart=null;
+      function openModal(i){
+        const s=students[i];
+        $('#mTitle').textContent = `${s.name} — ${s.section}`;
+        $('#mSub').textContent = 'Last update: ' + new Date(s.updated).toLocaleString();
+        $('#mTable').innerHTML = [
+          ['Strength',s.pre?.str ?? '-',s.post?.str ?? '-'],
+          ['Agility', s.pre?.agi ?? '-',s.post?.agi ?? '-'],
+          ['Speed',   s.pre?.spd ?? '-',s.post?.spd ?? '-'],
+          ['Endurance',s.pre?.endu?? '-',s.post?.endu?? '-'],
+        ].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
+        if(modalChart) modalChart.destroy();
+        modalChart=new Chart($('#mChart'),{
+          type:'bar',
+          data:{labels:['Strength','Agility','Speed','Endurance'],
+            datasets:[
+              {label:'Pre', data:[s.pre?.str||0,s.pre?.agi||0,s.pre?.spd||0,s.pre?.endu||0], backgroundColor:'rgba(63,94,255,.75)'},
+              {label:'Post',data:[s.post?.str||0,s.post?.agi||0,s.post?.spd||0,s.post?.endu||0], backgroundColor:'rgba(0,191,166,.65)'}
+            ]},
+          options:{responsive:true}
+        });
+        $('#mRemarks').value = s.remarks || 'Doing well. Keep it up!';
+        modal.style.display='flex'; modal.setAttribute('aria-hidden','false');
+      }
+      $('#closeModalBtn').addEventListener('click', ()=>{ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); });
+      window.addEventListener('keydown', e=>{ if(e.key==='Escape'){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); }});
+      $('#exportPdfBtn').addEventListener('click', ()=> alert('PDF export simulated.'));
+
+      /* SUMMARY */
+      let sumChart=null;
+      function renderSummary(){
+        const ctx=$('#summaryChart'); if(sumChart) sumChart.destroy();
+        const section=$('#fSection').value||'all', type=$('#fType').value||'all';
+        const from=$('#fFrom').value, to=$('#fTo').value;
+        const filtered = students.filter(s=>{
+          if(section!=='all' && s.section!==section) return false;
+          if(from && s.updated<from) return false;
+          if(to && s.updated>to) return false;
+          if(type==='pre' && !s.pre) return false;
+          if(type==='post' && !s.post) return false;
+          return true;
+        });
+        const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+        const preBMI = avg(filtered.map(()=>22+Math.random()*4));
+        const vo2Imp = avg(filtered.map(s=> s.post ? (s.post.endu - s.pre.endu) : 0));
+        const flexA = 10 + Math.floor(Math.random()*6);
+        const flexB = 14 + Math.floor(Math.random()*6);
+        sumChart=new Chart(ctx,{
+          type:'bar',
+          data:{labels:['Avg BMI (est.)','VO₂ Improvement','Flexibility A','Flexibility B'],
+            datasets:[{label:'Aggregate',data:[preBMI.toFixed(1),vo2Imp.toFixed(1),flexA,flexB],
+                       backgroundColor:['rgba(63,94,255,.8)','rgba(0,191,166,.7)','rgba(63,94,255,.25)','rgba(0,191,166,.25)']}]},
+          options:{responsive:true}
+        });
+      }
+      $('#refreshSummaryBtn').addEventListener('click', renderSummary);
+      $('#exportPngBtn').addEventListener('click', ()=>{
+        const c=$('#summaryChart'); const a=document.createElement('a'); a.href=c.toDataURL('image/png'); a.download='summary.png'; a.click();
+      });
+    });
+  </script>
+</body>
+</html>
